@@ -14,7 +14,7 @@ from config import *
 from utils.format import get_emoji, get_keyboard
 from utils.zapi.get import get_graph
 
-config = BaseConfig
+config = PersonalConfig
 
 # Configure logging
 logging.basicConfig(
@@ -27,8 +27,6 @@ bot = Bot(token=config.API_TOKEN)
 
 
 async def send_message(argv: list) -> None:
-    # session = await bot.get_session()
-
     try:
         send_to, subject, message = argv[1:]
         message = xmltodict.parse(message)
@@ -36,7 +34,7 @@ async def send_message(argv: list) -> None:
         text = message["root"]["body"]["messages"]
         is_graph = True if settings.get("graphs") == "True" else False
 
-    except ValueError as err:
+    except ValueError:
         logging.error("Нет аргументов для отправки", exc_info=True)
         return
     except KeyError:
@@ -46,7 +44,7 @@ async def send_message(argv: list) -> None:
         logging.error("Некорректное сообщение", exc_info=True)
         return
 
-    thread_id = send_to if send_to in config.THREAD_IDS.values() else None
+    # thread_id = send_to if send_to in config.THREAD_IDS.values() else None
 
     emoji_1, emoji_2 = get_emoji(subject, settings)
     header = f"{emoji_1}{subject}"
@@ -72,24 +70,22 @@ async def send_message(argv: list) -> None:
 
             photo = types.InputFile(img_path)
             await bot.send_photo(
-                config.CHAT_ID,
+                send_to,
                 photo,
                 f"*{header}*\n\n{text}\n\n{tags}",
                 parse_mode="Markdown",
-                message_thread_id=thread_id,
                 reply_markup=get_keyboard(settings, config),
             )
         finally:
             os.remove(img_path)
     else:
         await bot.send_message(
-            config.CHAT_ID,
+            send_to,
             f"*{header}*\n\n{text}\n\n{tags}",
             parse_mode="Markdown",
-            message_thread_id=thread_id,
             reply_markup=get_keyboard(settings, config),
         )
-    # await session.close()
+    await bot.session.close()
 
 
 if __name__ == "__main__":
