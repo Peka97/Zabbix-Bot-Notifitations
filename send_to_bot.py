@@ -35,13 +35,18 @@ async def send_message(argv: list) -> None:
         is_graph = True if settings.get("graphs") == "True" else False
 
     except ValueError:
-        logging.error("Нет аргументов для отправки", exc_info=True)
+        logging.error(f"Нет аргументов для отправки. Узел: {subject}", exc_info=True)
+        await bot.session.close()
         return
     except KeyError:
-        logging.error("Некорректные настройки", exc_info=True)
+        logging.error(f"Некорректные настройки. Узел: {subject}", exc_info=True)
+        await bot.session.close()
         return
     except ExpatError:
-        logging.error("Некорректное сообщение", exc_info=True)
+        logging.error(f"Некорректное сообщение. Узел: {subject}", exc_info=True)
+        for admin in config.ADMINS:
+            await bot.send_message(admin, f"Ошибка шаблона\nУзел: {subject}")
+        await bot.session.close()
         return
 
     # thread_id = send_to if send_to in config.THREAD_IDS.values() else None
