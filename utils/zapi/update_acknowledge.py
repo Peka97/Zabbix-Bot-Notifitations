@@ -1,4 +1,5 @@
 import requests
+from aiogram.types import User
 
 from .auth import get_cookie
 
@@ -26,7 +27,16 @@ class BaseConfig:
 config = BaseConfig
 
 
-def confirm_problem(settings, user):
+def confirm_problem(settings: dict, user: User) -> int:
+    """Функция, подтверждающая проблему в Zabbix.
+
+    Args:
+        settings (dict): Словарь с параметрами для поиска триггера в Zabbix.
+        user (User): Экземпляр пользователя Telegram.
+
+    Returns:
+        status code (int): Код статуса запроса
+    """
     event_id = settings["eventid"]
     response = requests.post(
         url=f"{config.zabbix_api_url}api_jsonrpc.php",
@@ -42,4 +52,5 @@ def confirm_problem(settings, user):
         },
         cookies=get_cookie(config),
     )
-    return response.content, response.url, response.status_code
+
+    return response.status_code

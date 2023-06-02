@@ -1,7 +1,17 @@
 from aiogram import types
 
 
-def get_emoji(subj: str, settings) -> str | None:
+def get_emoji(subj: str, settings: dict) -> str | None:
+    """Функция, подбирающая необходимый эмоджи под сообщение.
+
+    Args:
+        subj (str): Проблема из параметров Zabbix
+        settings (dict): Настройки из шаблона Zabbix
+
+    Returns:
+        str | None: Эмоджи
+    """
+
     emojies = {
         "Problem": "🚨",
         "Resolved": "✅",
@@ -22,8 +32,27 @@ def get_emoji(subj: str, settings) -> str | None:
 
 
 def get_keyboard(
-    settings: dict, config, edit=False
+    settings: dict, config: object, edit=False
 ) -> types.InlineKeyboardMarkup | None:
+    """Функция генерации Inline-клавиатуры для сообщений на основе переданных
+    из Zabbix настроек и выбранной конфигурации.
+
+     - если клавитура формируется впервые, то флаг edit оставляем по умолчанию
+       False.
+     - если нужно обновить клавиатуру (подтвердить проблему в Zabbix), то
+       в edit передаём True.
+
+    Args:
+        settings (dict): Настройки из шаблона Zabbix
+        config (object): Конфигурация скрипта
+        edit (bool, optional): Отредактировать клавиатуру под существующим
+        сообщением. По умолчанию False.
+
+    Returns:
+        types.InlineKeyboardMarkup | None: Экземпляр Inline-клавиатуры.
+    """
+
+    # Проверяем флаг "keyboard" чтобы понять нужна ли нам клавиатура в сообщении
     if settings.get("keyboard") and settings["keyboard"] == "True":
         item_id = settings["itemid"]
         event_id = settings["eventid"]
@@ -34,7 +63,10 @@ def get_keyboard(
         keyboard = types.InlineKeyboardMarkup(
             row_width=2,
         )
+
+        # Проверка флага на исправление существующей клавиатуры
         if edit:
+            # Формируем клавиатуру с подтверждённой проблемой
             keyboard.add(
                 types.InlineKeyboardButton(
                     "График 📈",
@@ -50,6 +82,8 @@ def get_keyboard(
                 ),
                 types.InlineKeyboardButton("Проблема ✅", callback_data="empty"),
             )
+
+        # Формируем новую клавиатуру
         else:
             keyboard.add(
                 types.InlineKeyboardButton(

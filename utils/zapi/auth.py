@@ -1,7 +1,16 @@
 import requests
 
 
-def get_cookie(config):
+def get_cookie(config: object) -> None:
+    """Запрос на сервер Zabbix для формирования cookie.
+
+    Args:
+        config (object): Конфигурация скрипта Zabbix
+
+    Returns:
+        None
+    """
+
     data_api = {
         "name": config.zabbix_api_login,
         "password": config.zabbix_api_pass,
