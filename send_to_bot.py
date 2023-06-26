@@ -111,6 +111,16 @@ async def send_message(*args: list) -> None:
         except Exception as err:
             logging.ERROR(f"Ошибка отправки сообщения:\n {err.with_traceback}")
 
+            img_path = "/usr/lib/zabbix/alertscripts/misc/img/graph_not_found.png"
+            photo = types.InputFile(img_path)
+            await bot.send_photo(
+                send_to,
+                photo,
+                f"*{header}*\n\n{text}\n\n{tags}",
+                parse_mode="Markdown",
+                reply_markup=get_keyboard(settings, config),
+            )
+
         # Вне зависимости от результата удаляем файл из папки кэша
         finally:
             os.remove(img_path)
