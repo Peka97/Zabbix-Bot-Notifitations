@@ -20,7 +20,7 @@ config = PersonalConfig
 
 # Логирование
 logging.basicConfig(
-    level=logging.ERROR,
+    level=logging.INFO,
     filename="/usr/lib/zabbix/alertscripts/logs/send_to_bot.log",
     format=config.FORMAT,
 )
@@ -84,35 +84,36 @@ async def send_message(*args: list) -> None:
         # Пробуем отправить сообщение
         try:
             # Скачиваем график по ссылке
-            graph_img, _, _ = get_graph(settings, config)
+            graph_img, resp, _ = get_graph(settings, config)
             img = Image.open(io.BytesIO(graph_img))
 
-            # Изменяем размеры под стандарты Telegram
-            img = img.resize((1000, 350))
-
-            # Сохраняем полученный график
+            # Объявляем путь для графика
             img_name = f"{settings['host']}_{settings['triggerid']}_graph.png"
             img_path = f"/usr/lib/zabbix/alertscripts/misc/cache/{img_name}"
+
+            # Проверяем разрешение графика
+            if img.size < (config.graph_width, config.graph_height):
+                raise ValueError
+
+            # Изменяем размеры графика под стандарты Telegram и сохраняем
+            img = img.resize((1000, 350))
             img.save(img_path, format=img.format)
 
-            # Грузим в объект, который распознает Telegram
+            # Загружаем график объектом, который распознает Telegram
             photo = types.InputFile(img_path)
-
-            # Отправляем пользователям
-            await bot.send_photo(
-                send_to,
-                photo,
-                f"*{header}*\n\n{text}\n\n{tags}",
-                parse_mode="Markdown",
-                reply_markup=get_keyboard(settings, config),
-            )
 
         # Отлавливаем ошибки
         except Exception as err:
-            logging.ERROR(f"Ошибка отправки сообщения:\n {err.with_traceback}")
+            logging.error(f"Ошибка отправки графика:\n {err}", exc_info=True)
 
-            img_path = "/usr/lib/zabbix/alertscripts/misc/img/graph_not_found.png"
-            photo = types.InputFile(img_path)
+            img_err_path = "/usr/lib/zabbix/alertscripts/misc/img/graph_not_found.png"
+            photo = types.InputFile(img_err_path)
+
+        # Вне зависимости от результата удаляем файл из папки кэша
+        else:
+            if os.path.exists(img_path):
+                os.remove(img_path)
+        finally:
             await bot.send_photo(
                 send_to,
                 photo,
@@ -120,10 +121,6 @@ async def send_message(*args: list) -> None:
                 parse_mode="Markdown",
                 reply_markup=get_keyboard(settings, config),
             )
-
-        # Вне зависимости от результата удаляем файл из папки кэша
-        finally:
-            os.remove(img_path)
 
     # Отправка сообщения без графика
     else:
@@ -137,7 +134,7 @@ async def send_message(*args: list) -> None:
 
         # Отлавливаем ошибки
         except Exception as err:
-            logging.ERROR(f"Ошибка отправки сообщения:\n {err.with_traceback}")
+            logging.error(f"Ошибка отправки сообщения:\n {err}", exc_info=True)
 
     # Закрываем сессию бота
     await bot.session.close()

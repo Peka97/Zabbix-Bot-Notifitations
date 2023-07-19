@@ -1,6 +1,19 @@
 import requests
+import logging
 
 from .auth import get_cookie
+from config import *
+
+
+# Конфигурация
+config = PersonalConfig
+
+# Логирование
+logging.basicConfig(
+    level=logging.INFO,
+    filename="/usr/lib/zabbix/alertscripts/logs/zapi.log",
+    format=config.FORMAT,
+)
 
 
 def get_graph(settings: dict, config: object) -> tuple[bytes, str, int]:
@@ -17,28 +30,27 @@ def get_graph(settings: dict, config: object) -> tuple[bytes, str, int]:
             - status code (int): Код статуса запроса
     """
 
-    zabbix_graph_chart = (
-        "{zabbix_server}chart3.php?"
-        "name={name}&"
-        "from=now-{range_time}&"
-        "to=now&"
-        "width=900&"
-        "height=200&"
-        "items[0][itemid]={itemid}&"
-        "legend=1&"
-        "showtriggers=1&"
-        "showworkperiod=1"
-    )
+    url = f"{config.zabbix_api_url}chart.php?"
+    params = {
+        "from": f"now-{config.period}",
+        "to": "now",
+        "width": f"{config.graph_width}",
+        "height": f"{config.graph_height}",
+        "itemids[0]": f"{settings['itemid']}",
+        "profileIdx": "web.item.graph.filter",
+        "legend": "1",
+        "showtriggers": "1",
+        "showworkperiod": "1",
+    }
+    cookies = get_cookie(config)
 
     response = requests.get(
-        zabbix_graph_chart.format(
-            name=settings["title"],
-            itemid=settings["itemid"].split()[0],
-            zabbix_server=config.zabbix_api_url,
-            range_time=config.period,
-        ),
-        cookies=get_cookie(config),
+        url,
+        params,
+        cookies=cookies,
         verify=False,
     )
+
+    logging.info(f"{response.url}")
 
     return response.content, response.url, response.status_code

@@ -3,28 +3,11 @@ from aiogram.types import User
 
 from .auth import get_cookie
 
+from config import *
+
 # from py-zabbix import ZabbixAPI
 
-
-class BaseConfig:
-    ADMINS = [1387411715]
-    CHAT_ID = -1001743552948
-    THREAD_IDS = {
-        "МБН": 2,
-        "МЖБН": 12,
-        "СХБН": 39,
-        "СБН": 272,
-        "ГК": 274,
-    }
-    FORMAT = "%(asctime)-15s [%(levelname)s] (%(filename)s).%(funcName)s(%(lineno)d) %(message)s"
-    API_TOKEN = "5858306484:AAFIy5qgan4tfZWE6x9YAtROQArQGIqhNNU"
-    zabbix_api_login = "zabbixbot"
-    zabbix_api_pass = "sexbot666"
-    zabbix_api_url = "http://130.193.42.73/zabbix/"
-    period = "43200"
-
-
-config = BaseConfig
+config = PersonalConfig
 
 
 def confirm_problem(settings: dict, user: User) -> int:
@@ -38,18 +21,23 @@ def confirm_problem(settings: dict, user: User) -> int:
         status code (int): Код статуса запроса
     """
     event_id = settings["eventid"]
+    url = f"{config.zabbix_api_url}api_jsonrpc.php"
+    json_ = {
+        "jsonrpc": "2.0",
+        "method": "event.acknowledge",
+    }
+    params = {
+        "eventids": event_id,
+        "action": 6,
+        "message": f"Problem confirm by {user.last_name} {user.first_name}",
+    }
+    headers = {"Content-Type": "application/json-rpc"}
+
     response = requests.post(
-        url=f"{config.zabbix_api_url}api_jsonrpc.php",
-        headers={"Content-Type": "application/json-rpc"},
-        json={
-            "jsonrpc": "2.0",
-            "method": "event.acknowledge",
-            "params": {
-                "eventids": event_id,
-                "action": 6,
-                "message": f"Problem confirm by {user.last_name} {user.first_name}",
-            },
-        },
+        url=url,
+        json=json_,
+        params=params,
+        headers=headers,
         cookies=get_cookie(config),
     )
 

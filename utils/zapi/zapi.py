@@ -9,7 +9,7 @@ from pprint import pprint
 
 from pyzabbix import ZabbixAPI
 
-from config import BaseConfig as cfg
+from config import PersonalConfig as cfg
 
 
 def get_all():
