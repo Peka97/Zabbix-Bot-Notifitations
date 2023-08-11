@@ -156,3 +156,4 @@ cython_debug/
 config.py
 log.log
 .vscode/
+test.py

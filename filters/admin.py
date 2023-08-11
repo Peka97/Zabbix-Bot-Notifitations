@@ -14,5 +14,4 @@ def is_admin(user_id: int | str) -> bool:
     Returns:
         bool: True or False
     """
-
     return int(user_id) in config.ADMINS

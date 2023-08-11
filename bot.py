@@ -4,6 +4,7 @@ import logging
 import re
 
 from aiogram import Bot, Dispatcher, executor, types
+from aiogram.contrib.fsm_storage.memory import MemoryStorage
 
 from config import *
 from handlers.register_all_handlers import register_all_handlers
@@ -16,14 +17,14 @@ config = BaseConfig()
 
 # Логирование
 logging.basicConfig(
-    level=logging.ERROR,
-    filename="/usr/lib/zabbix/alertscripts/logs/bot.log",
+    level=logging.INFO,
+    # filename="/usr/lib/zabbix/alertscripts/logs/bot.log",
     format=config.FORMAT,
 )
 
 # Объявление экземпляров бота и диспетчера
 bot = Bot(token=config.API_TOKEN)
-dp = Dispatcher(bot)
+dp = Dispatcher(bot, storage=MemoryStorage())
 
 
 @dp.callback_query_handler(lambda c: "confirm_problem" in c.data)
@@ -64,8 +65,18 @@ async def send_confirm_problem_to_zabbix(callback_query: types.CallbackQuery) ->
         )
 
 
+async def start_up(dp: Dispatcher):
+    for user_id in config.ADMINS:
+        commands = [
+            types.BotCommand("inventory_hosts", "Инвентаризация хостов"),
+            types.BotCommand("inventory_group", "Инвентаризация группы"),
+        ]
+        scope = types.BotCommandScopeChat(user_id)
+        await bot.set_my_commands(commands, scope)
+
+
 if __name__ == "__main__":
     # Регистрируем все хэндлеры для бота
     register_all_handlers(dp)
     # Запускаем бота
-    executor.start_polling(dp, skip_updates=True)
+    executor.start_polling(dp, skip_updates=True, on_startup=start_up)

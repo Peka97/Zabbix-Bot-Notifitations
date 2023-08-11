@@ -51,6 +51,6 @@ def get_graph(settings: dict, config: object) -> tuple[bytes, str, int]:
         verify=False,
     )
 
-    logging.info(f"{response.url}")
+    # logging.info(f"{response.url}")
 
     return response.content, response.url, response.status_code
