@@ -54,7 +54,6 @@ async def send_confirm_problem_to_zabbix(callback_query: types.CallbackQuery) ->
     }
 
     # Подверждаем проблему
-    # status_code = confirm_problem(settings, user)
     status_code = zapi.confirm_problem(settings, user)
 
     # При статусе 200 редактируем клавиатуру

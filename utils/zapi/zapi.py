@@ -11,8 +11,7 @@ import pandas as pd
 from openpyxl.worksheet.worksheet import Worksheet
 from aiogram.types import User
 
-from .output import Output
-from .tools import parse_interfaces
+from .tools import Output, parse_interfaces
 from config import *
 
 

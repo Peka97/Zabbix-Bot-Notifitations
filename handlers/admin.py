@@ -5,10 +5,14 @@ from aiogram import types
 from aiogram.dispatcher.filters.state import State, StatesGroup
 from aiogram.dispatcher import FSMContext
 
-from zapi.zapi import zapi
+from config import *
+from zapi import ZabbixAPI
 from utils.zapi.tools import parse_interfaces
 
 logging.getLogger()
+
+cfg = PersonalConfig
+zapi = ZabbixAPI(cfg.zabbix_api_url, cfg.zabbix_api_login, cfg.zabbix_api_pass)
 
 
 class AdminState(StatesGroup):
