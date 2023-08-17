@@ -5,7 +5,8 @@ from aiogram import types
 from aiogram.dispatcher.filters.state import State, StatesGroup
 from aiogram.dispatcher import FSMContext
 
-from zapi import zapi
+from zapi.zapi import zapi
+from utils.zapi.tools import parse_interfaces
 
 logging.getLogger()
 
@@ -135,7 +136,7 @@ async def get_inventory_hosts(message: types.Message, state: FSMContext):
         await message.answer(err)
 
     else:
-        data = zapi._parse_interfaces(data)
+        data = parse_interfaces(data)
         AdminState.inventory = data
         await ask_inventory_format(message)
     finally:

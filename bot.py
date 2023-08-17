@@ -8,7 +8,6 @@ from aiogram.contrib.fsm_storage.memory import MemoryStorage
 
 from config import *
 from handlers.register_all_handlers import register_all_handlers
-from utils.zapi.update_acknowledge import confirm_problem
 from utils.format import get_keyboard
 from utils.zapi.zapi import ZabbixAPI
 

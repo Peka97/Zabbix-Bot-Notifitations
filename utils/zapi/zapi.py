@@ -12,8 +12,8 @@ from openpyxl.worksheet.worksheet import Worksheet
 from aiogram.types import User
 
 from .output import Output
+from .tools import parse_interfaces
 from config import *
-from .auth import get_cookie
 
 
 logging.getLogger("zapi.log")
@@ -186,7 +186,7 @@ class ZabbixAPI:
 
             res = requests.get(self._url, data=json.dumps(data), headers=self.headers)
             group_info = res.json().get("result")
-            group_info = self._parse_interfaces(group_info)
+            group_info = parse_interfaces(group_info)
 
             [
                 result.append(host_info)
@@ -227,7 +227,7 @@ class ZabbixAPI:
 
         res = requests.get(self._url, data=data, headers=self.headers)
         info = res.json().get("result")
-        info = self._parse_interfaces(info)
+        info = parse_interfaces(info)
 
         return info
 
@@ -285,36 +285,36 @@ class ZabbixAPI:
 
         return result
 
-    @staticmethod
-    def _parse_interfaces(data: dict | list[dict]) -> list[dict]:
-        """Description
-        ------
-        Внутренний метод для разбора вложенного параметра интерфейсов.
-        Изменяет полученные даные, раскрывая словарь "interfaces" и перенося
-        данные в словарь хоста.
+    # @staticmethod
+    # def parse_interfaces(data: dict | list[dict]) -> list[dict]:
+    #     """Description
+    #     ------
+    #     Внутренний метод для разбора вложенного параметра интерфейсов.
+    #     Изменяет полученные даные, раскрывая словарь "interfaces" и перенося
+    #     данные в словарь хоста.
 
-        Args:
-        ------
-            * `data` (dict | list[dict]): массив данных по хостам с ключем 'interfaces'.
+    #     Args:
+    #     ------
+    #         * `data` (dict | list[dict]): массив данных по хостам с ключем 'interfaces'.
 
-        Returns:
-        ------
-            * list[dict]: массив данных по хостам с раскрытым интерфейсом.
-        """
+    #     Returns:
+    #     ------
+    #         * list[dict]: массив данных по хостам с раскрытым интерфейсом.
+    #     """
 
-        if isinstance(data, dict):
-            data = [data]
+    #     if isinstance(data, dict):
+    #         data = [data]
 
-        for idx, host_info in enumerate(data.copy()):
-            interfaces = host_info.get("interfaces")
+    #     for idx, host_info in enumerate(data.copy()):
+    #         interfaces = host_info.get("interfaces")
 
-            if interfaces:
-                for key, value in interfaces[0].items():
-                    data[idx][key] = value
-            if data[idx].get("interfaces") or data[idx].get("interfaces") == []:
-                data[idx].pop("interfaces")
+    #         if interfaces:
+    #             for key, value in interfaces[0].items():
+    #                 data[idx][key] = value
+    #         if data[idx].get("interfaces") or data[idx].get("interfaces") == []:
+    #             data[idx].pop("interfaces")
 
-        return data
+    #     return data
 
     def get_graph(self, settings: dict) -> tuple[bytes, str, int]:
         """Description
@@ -394,7 +394,10 @@ class ZabbixAPI:
 
 if __name__ == "__main__":
     pass
-    # zapi = ZabbixAPI("http://130.193.42.73/zabbix/", "zabbixbot", "sexbot666")
+
+    zapi = ZabbixAPI(
+        config.zabbix_api_url, config.zabbix_api_login, config.zabbix_api_pass
+    )
 
     ### Инвентаризация по имени хоста:
     # result = zapi.get_host_interfaces(["Zabbix server", "test"])
