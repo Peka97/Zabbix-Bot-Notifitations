@@ -12,7 +12,7 @@ from aiogram import types, Bot
 
 from config import *
 from utils.format import get_emoji, get_keyboard
-from utils.zapi.get import get_graph
+from utils.zapi.zapi import ZabbixAPI
 
 
 # Устанавливаем необходимую конфигурацию
@@ -27,6 +27,7 @@ logging.basicConfig(
 
 # Создаем экземпляр бота
 bot = Bot(token=config.API_TOKEN)
+zapi = ZabbixAPI(config.zabbix_api_url, config.zabbix_api_login, config.zabbix_api_pass)
 
 
 async def send_message(*args: list) -> None:
@@ -42,22 +43,21 @@ async def send_message(*args: list) -> None:
 
     # Пробуем сериализовать полученные данные
     try:
-        send_to, subject, message = argv[1:]
+        send_to, subject, message = args[1:]
+        logging.info(f"{send_to} | {subject} | {message}")
         message = xmltodict.parse(message)
         settings = message["root"]["settings"]
         text = message["root"]["body"]["messages"]
         is_graph = True if settings.get("graphs") == "True" else False
 
     except ValueError:
-        logging.error(f"Нет аргументов для отправки. Subject: {subject}", exc_info=True)
+        logging.error(f"Нет аргументов для отправки", exc_info=True)
         await bot.session.close()
         return
     except (KeyError, ExpatError):
-        logging.error(
-            f"Некорректные настройки шаблона. Subject: {subject}", exc_info=True
-        )
+        logging.error(f"Некорректные настройки шаблона", exc_info=True)
         for admin in config.ADMINS:
-            await bot.send_message(admin, f"Ошибка шаблона\nSubject: {subject}")
+            await bot.send_message(admin, f"Ошибка шаблона")
         await bot.session.close()
         return
 
@@ -84,7 +84,7 @@ async def send_message(*args: list) -> None:
         # Пробуем отправить сообщение
         try:
             # Скачиваем график по ссылке
-            graph_img, resp, _ = get_graph(settings, config)
+            graph_img, resp, _ = zapi.get_graph(settings)
             img = Image.open(io.BytesIO(graph_img))
 
             # Объявляем путь для графика
@@ -137,8 +137,10 @@ async def send_message(*args: list) -> None:
             logging.error(f"Ошибка отправки сообщения:\n {err}", exc_info=True)
 
     # Закрываем сессию бота
-    await bot.session.close()
+    session = await bot.get_session()
+    if session:
+        await session.close()
 
 
 if __name__ == "__main__":
-    asyncio.run(send_message(argv))
+    asyncio.run(send_message(*argv))

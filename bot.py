@@ -10,6 +10,7 @@ from config import *
 from handlers.register_all_handlers import register_all_handlers
 from utils.zapi.update_acknowledge import confirm_problem
 from utils.format import get_keyboard
+from utils.zapi.zapi import ZabbixAPI
 
 
 # Определение конфигурации
@@ -22,9 +23,10 @@ logging.basicConfig(
     format=config.FORMAT,
 )
 
-# Объявление экземпляров бота и диспетчера
+# Объявление экземпляров бота, диспетчера и ZappixAPI
 bot = Bot(token=config.API_TOKEN)
 dp = Dispatcher(bot, storage=MemoryStorage())
+zapi = ZabbixAPI(config.zabbix_api_url, config.zabbix_api_login, config.zabbix_api_pass)
 
 
 @dp.callback_query_handler(lambda c: "confirm_problem" in c.data)
@@ -53,7 +55,8 @@ async def send_confirm_problem_to_zabbix(callback_query: types.CallbackQuery) ->
     }
 
     # Подверждаем проблему
-    status_code = confirm_problem(settings, user)
+    # status_code = confirm_problem(settings, user)
+    status_code = zapi.confirm_problem(settings, user)
 
     # При статусе 200 редактируем клавиатуру
     if status_code == 200:
@@ -66,6 +69,17 @@ async def send_confirm_problem_to_zabbix(callback_query: types.CallbackQuery) ->
 
 
 async def start_up(dp: Dispatcher):
+    """Description
+    ------
+    _summary_
+
+    _extended_summary_
+
+    Args:
+    ------
+        * `dp` (Dispatcher): _description_
+    """
+
     for user_id in config.ADMINS:
         commands = [
             types.BotCommand("inventory_hosts", "Инвентаризация хостов"),

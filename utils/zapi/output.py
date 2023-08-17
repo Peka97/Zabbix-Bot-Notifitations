@@ -84,8 +84,8 @@ class Output:
         headers = max((host.keys() for host in data))
 
         df = pd.DataFrame(data, columns=headers)
-        # df.to_csv(fp, ";", header=headers, encoding="cp1251")
-        df.to_csv(fp, ";", header=headers, encoding="utf-8")
+        df.to_csv(fp, ";", header=headers, encoding="cp1251")
+        # df.to_csv(fp, ";", header=headers, encoding="utf-8")
 
         return fp
 

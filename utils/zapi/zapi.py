@@ -9,11 +9,15 @@ from tabulate import tabulate
 
 import pandas as pd
 from openpyxl.worksheet.worksheet import Worksheet
+from aiogram.types import User
 
 from .output import Output
+from config import *
+from .auth import get_cookie
 
 
 logging.getLogger("zapi.log")
+config = PersonalConfig
 
 
 class ZabbixAPI:
@@ -48,6 +52,8 @@ class ZabbixAPI:
         """
 
         self._url = f"{url}api_jsonrpc.php"
+        self._login = login
+        self._password = password
         self._auth(login, password)
 
     def _auth(self, login: str, password: str) -> None:
@@ -78,11 +84,22 @@ class ZabbixAPI:
             "id": 1,
         }
 
+        # Запрашиваем токен
         res = requests.post(self._url, json.dumps(data), headers=self.headers)
         token = res.json().get("result")
 
         if token:
+            # Сохраняем токен
             self._token = token
+
+            # Запрашиваем и сохранем cookies
+            data_api = {
+                "name": login,
+                "password": password,
+                "enter": "Sign in",
+            }
+            res = requests.post(config.zabbix_api_url, data=data_api, verify=False)
+            self._cookies = res.cookies
         else:
             raise ValueError("Неверное имя пользователя и/или пароль")
 
@@ -298,6 +315,81 @@ class ZabbixAPI:
                 data[idx].pop("interfaces")
 
         return data
+
+    def get_graph(self, settings: dict) -> tuple[bytes, str, int]:
+        """Description
+        ------
+        Функция получения графика по запросу к Zabbix.
+
+        Структура возвращаемого кортежа:
+            - content (bytes): График
+            - url (str): Ссылка на график
+            - status code (int): Код статуса запроса
+
+        Args:
+        ------
+            * `settings` (dict): настройки из шаблона Zabbix
+
+        Returns:
+        ------
+            * tuple[bytes, str, int]: контент по графику
+        """
+
+        url = f"{config.zabbix_api_url}chart.php?"
+        params = {
+            "from": f"now-{config.period}",
+            "to": "now",
+            "width": f"{config.graph_width}",
+            "height": f"{config.graph_height}",
+            "itemids[0]": f"{settings['itemid']}",
+            "profileIdx": "web.item.graph.filter",
+            "legend": "1",
+            "showtriggers": "1",
+            "showworkperiod": "1",
+        }
+        response = requests.get(
+            url,
+            params,
+            cookies=self._cookies,
+            verify=False,
+        )
+
+        return response.content, response.url, response.status_code
+
+    def confirm_problem(self, settings: dict, user: User) -> int:
+        """Description
+        ------
+        Функция, подтверждающая проблему в Zabbix.
+
+        Args:
+        ------
+            * `settings` (dict): cловарь с параметрами для поиска триггера в Zabbix;
+            * `user` (User): экземпляр пользователя Telegram.
+
+        Returns:
+        ------
+            * status code (int): Код статуса запроса
+        """
+
+        try:
+            event_id = settings["eventid"]
+            data = {
+                "jsonrpc": "2.0",
+                "method": "event.acknowledge",
+                "params": {
+                    "eventids": event_id,
+                    "action": 6,
+                    "message": f"Problem confirm by {user.last_name} {user.first_name}",
+                },
+                "auth": self._token,
+                "id": 1,
+            }
+
+            response = requests.post(self._url, data, headers=self.headers)
+            return response.status_code
+
+        except Exception as err:
+            logging.error(err)
 
 
 if __name__ == "__main__":

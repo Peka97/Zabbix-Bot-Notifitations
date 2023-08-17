@@ -157,3 +157,4 @@ config.py
 log.log
 .vscode/
 test.py
+for_tests.py
