@@ -17,8 +17,8 @@ config = BaseConfig()
 
 # Логирование
 logging.basicConfig(
-    level=logging.INFO,
-    # filename="/usr/lib/zabbix/alertscripts/logs/bot.log",
+    level=logging.ERROR,
+    filename="/usr/lib/zabbix/alertscripts/logs/bot.log",
     format=config.FORMAT,
 )
 

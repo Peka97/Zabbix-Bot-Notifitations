@@ -3,19 +3,14 @@
 import logging
 import requests
 import json
-from time import time
-from pprint import pprint
-from tabulate import tabulate
 
-import pandas as pd
-from openpyxl.worksheet.worksheet import Worksheet
 from aiogram.types import User
 
 from .tools import Output, parse_interfaces
 from config import *
 
 
-logging.getLogger("zapi.log")
+logging.getLogger()
 config = PersonalConfig
 
 

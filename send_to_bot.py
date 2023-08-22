@@ -20,8 +20,8 @@ config = PersonalConfig
 
 # Логирование
 logging.basicConfig(
-    level=logging.INFO,
-    filename="/usr/lib/zabbix/alertscripts/logs/send_to_bot.log",
+    level=logging.ERROR,
+    filename="/usr/lib/zabbix/alertscripts/logs/bot.log",
     format=config.FORMAT,
 )
 
