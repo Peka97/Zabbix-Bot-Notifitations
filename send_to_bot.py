@@ -31,8 +31,9 @@ zapi = ZabbixAPI(config.zabbix_api_url, config.zabbix_api_login, config.zabbix_a
 
 
 async def send_message(*args: list) -> None:
-    """Функция, принимающая на вход коллекцию данных, содержащих следующую
+    """Функция, принимающая на вход список данных, содержащих следующую
     информацию:
+        script_name - имя вызванного скрипта (не будет использован).
         send_to - ID на который нужно отправить сообщение в Telegram
         subject - описание проблемы
         message - xml объект с дополнительной информацией по проблеме Zabbix
@@ -44,7 +45,6 @@ async def send_message(*args: list) -> None:
     # Пробуем сериализовать полученные данные
     try:
         send_to, subject, message = args[1:]
-        logging.info(f"{send_to} | {subject} | {message}")
         message = xmltodict.parse(message)
         settings = message["root"]["settings"]
         text = message["root"]["body"]["messages"]
@@ -52,16 +52,23 @@ async def send_message(*args: list) -> None:
 
     except ValueError:
         logging.error(f"Нет аргументов для отправки", exc_info=True)
-        await bot.session.close()
+        session = await bot.get_session()
+
+        if session:
+            await session.close()
         return
     except (KeyError, ExpatError):
         logging.error(f"Некорректные настройки шаблона", exc_info=True)
         for admin in config.ADMINS:
             await bot.send_message(admin, f"Ошибка шаблона")
-        await bot.session.close()
+
+        session = await bot.get_session()
+
+        if session:
+            await session.close()
         return
 
-    # Сериализация канала супергруппы, если необходима
+    # Выбор канала супергруппы, если необходима
     # thread_id = send_to if send_to in config.THREAD_IDS.values() else None
 
     # Формируем сообщение для отправки
