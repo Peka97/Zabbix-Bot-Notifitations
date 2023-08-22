@@ -9,9 +9,9 @@
 
 from aiogram import Dispatcher, Bot, types, executor
 
-from config import BaseConfig
+from config import PersonalConfig
 
-config = BaseConfig
+config = PersonalConfig
 
 bot = Bot(config.API_TOKEN)
 dp = Dispatcher(bot)

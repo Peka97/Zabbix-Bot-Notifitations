@@ -1,7 +1,7 @@
-from config import *
-from utils.zapi.zapi import ZabbixAPI
+# from config import *
+# from utils.zapi.zapi import ZabbixAPI
 
 
-config = BaseConfig()
+# config = BaseConfig()
 
-zapi = ZabbixAPI(config.zabbix_api_url, config.zabbix_api_login, config.zabbix_api_pass)
+# zapi = ZabbixAPI(config.zabbix_api_url, config.zabbix_api_login, config.zabbix_api_pass)

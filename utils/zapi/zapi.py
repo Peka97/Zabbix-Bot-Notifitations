@@ -7,7 +7,7 @@ import json
 from aiogram.types import User
 
 from .tools import Output, parse_interfaces
-from config import *
+from config import PersonalConfig, ChannelConfig
 
 
 logging.getLogger()

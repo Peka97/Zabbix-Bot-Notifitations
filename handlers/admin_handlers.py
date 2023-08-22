@@ -1,13 +1,15 @@
 import os
+import re
 import logging
 
 from aiogram import types
 from aiogram.dispatcher.filters.state import State, StatesGroup
 from aiogram.dispatcher import FSMContext
 
-from config import *
-from zapi import ZabbixAPI
+from config import PersonalConfig, ChannelConfig
+from utils.zapi.zapi import ZabbixAPI
 from utils.zapi.tools import parse_interfaces
+from utils.format import get_keyboard
 
 logging.getLogger()
 
@@ -177,7 +179,6 @@ async def send_inventory(callback: types.CallbackQuery):
     ------
         * `callback` (types.CallbackQuery): aiogram CallbackQuery object
     """
-
     data = AdminState.inventory
 
     if callback.data == "inventory_csv":
@@ -188,6 +189,44 @@ async def send_inventory(callback: types.CallbackQuery):
         file = types.InputFile(fp)
 
     await callback.message.answer_document(file)
+    await callback.bot.answer_callback_query(callback.id)
 
     if os.path.exists(fp):
         os.remove(fp)
+
+
+async def send_confirm_problem_to_zabbix(callback_query: types.CallbackQuery) -> None:
+    """Функция, отправляющая запрос подтверждения триггера в Zabbix.
+
+    Args:
+        callback_query (types.CallbackQuery): Экземпляр callback Telegram
+
+    Returns:
+        None
+    """
+
+    # Определяем от кого отправлен callback
+    user = callback_query.from_user
+
+    # Читаем параметры из тегов сообщения, под которым была нажата
+    # inline-кнопка, для определения триггера
+    message = callback_query.message.caption
+    settings = {
+        "itemid": re.findall(r"#item_\d+", message)[0].split("_")[1],
+        "eventid": re.findall(r"#event_\d+", message)[0].split("_")[1],
+        "triggerid": re.findall(r"#trigger_\d+", message)[0].split("_")[1],
+        "period": re.findall(r"#period_\d+", message)[0].split("_")[1],
+        "keyboard": "True",
+    }
+
+    # Подверждаем проблему
+    status_code = zapi.confirm_problem(settings, user)
+
+    # При статусе 200 редактируем клавиатуру
+    if status_code == 200:
+        await callback_query.bot.edit_message_reply_markup(
+            callback_query.message.chat.id,
+            callback_query.message.message_id,
+            callback_query.inline_message_id,
+            get_keyboard(settings, cfg, True),
+        )

@@ -8,26 +8,14 @@ import logging
 from sys import argv
 import xmltodict
 from xml.parsers.expat import ExpatError
-from aiogram import types, Bot
+from aiogram import types
 
-from config import *
 from utils.format import get_emoji, get_keyboard
-from utils.zapi.zapi import ZabbixAPI
+from bot import bot, config
+from handlers.admin_handlers import zapi
 
 
-# Устанавливаем необходимую конфигурацию
-config = PersonalConfig
-
-# Логирование
-logging.basicConfig(
-    level=logging.ERROR,
-    filename="/usr/lib/zabbix/alertscripts/logs/bot.log",
-    format=config.FORMAT,
-)
-
-# Создаем экземпляр бота
-bot = Bot(token=config.API_TOKEN)
-zapi = ZabbixAPI(config.zabbix_api_url, config.zabbix_api_login, config.zabbix_api_pass)
+logging.getLogger()
 
 
 async def send_message(*args: list) -> None:
