@@ -17,12 +17,12 @@ def get_emoji(subj: str, settings: dict) -> str | None:
         "Resolved": "✅",
         "Update": "🚧",
         "Not classified": "⁉️",
-        "Information": "💙",
-        "Warning": "💛",
-        "Average": "🧡",
-        "High": "❤️",
-        "Disaster": "💔",
-        "Test": "🚽💩",
+        "Information": "🔵",
+        "Warning": "🟡",
+        "Average": "🟠",
+        "High": "🔴",
+        "Disaster": "⛔️",
+        "Test": "🛠",
     }
 
     emoji_1 = emojies.get(subj.split()[0].rstrip(":"))
@@ -80,7 +80,7 @@ def get_keyboard(
                     "BMC 🗳",
                     url=f"{config.zabbix_api_url}",
                 ),
-                types.InlineKeyboardButton("Проблема ✅", callback_data="empty"),
+                types.InlineKeyboardButton("Подтверждено ✅", callback_data="empty"),
             )
 
         # Формируем новую клавиатуру

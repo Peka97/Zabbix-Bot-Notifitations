@@ -11,6 +11,7 @@ from xml.parsers.expat import ExpatError
 from aiogram import types
 
 from utils.format import get_emoji, get_keyboard
+from utils.parser import parse_data
 from bot import bot, config
 from handlers.admin_handlers import zapi
 
@@ -34,8 +35,13 @@ async def send_message(*args: list) -> None:
     try:
         send_to, subject, message = args[1:]
         message = xmltodict.parse(message)
-        settings = message["root"]["settings"]
-        text = message["root"]["body"]["messages"]
+        settings, text, errors = parse_data(message)
+
+        if errors:
+            raise KeyError(errors)
+
+        # settings = message["root"]["settings"]
+        # text = message["root"]["body"]["messages"]
         is_graph = True if settings.get("graphs") == "True" else False
 
     except ValueError:
@@ -45,10 +51,19 @@ async def send_message(*args: list) -> None:
         if session:
             await session.close()
         return
-    except (KeyError, ExpatError):
-        logging.error(f"Некорректные настройки шаблона", exc_info=True)
+
+    except ExpatError:
+        logging.error(f"Некорректный xml")
         for admin in config.ADMINS:
-            await bot.send_message(admin, f"Ошибка шаблона")
+            await bot.send_message(admin, f"Некорректный xml:\n{message}")
+        return
+
+    except KeyError as err:
+        logging.error(f"Невозможно получить данные по ключам: {err}", exc_info=True)
+        for admin in config.ADMINS:
+            await bot.send_message(
+                admin, f"Невозможно получить данные по ключам: {err}"
+            )
 
         session = await bot.get_session()
 
